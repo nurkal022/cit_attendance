@@ -456,29 +456,24 @@ def admin_schedule_export_pdf():
     font_name_bold = 'Helvetica-Bold'
     
     try:
-        # Пробуем использовать Arial Unicode MS (если доступен)
-        arial_unicode_paths = [
+        # Пробуем найти шрифт с поддержкой кириллицы
+        font_paths = [
+            # macOS
             '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
             '/Library/Fonts/Arial Unicode.ttf',
-            '/System/Library/Fonts/Arial Unicode.ttf',
+            # Ubuntu/Linux
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/TTF/DejaVuSans.ttf',
         ]
         
-        font_registered = False
-        for font_path in arial_unicode_paths:
-            try:
-                if os.path.exists(font_path):
-                    # Регистрируем обычный и жирный варианты
-                    pdfmetrics.registerFont(TTFont('ArialUnicode', font_path))
-                    pdfmetrics.registerFont(TTFont('ArialUnicode-Bold', font_path))
-                    font_registered = True
-                    font_name = 'ArialUnicode'
-                    font_name_bold = 'ArialUnicode-Bold'
-                    break
-            except Exception as e:
-                continue
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('CyrillicFont', font_path))
+                font_name = 'CyrillicFont'
+                font_name_bold = 'CyrillicFont'
+                break
         
     except Exception as e:
-        # В случае ошибки используем стандартный шрифт
         pass
     
     # Дни недели на казахском
@@ -779,24 +774,21 @@ def admin_attendance_export_pdf():
     font_name_bold = 'Helvetica-Bold'
     
     try:
-        arial_unicode_paths = [
+        font_paths = [
+            # macOS
             '/System/Library/Fonts/Supplemental/Arial Unicode.ttf',
             '/Library/Fonts/Arial Unicode.ttf',
-            '/System/Library/Fonts/Arial Unicode.ttf',
+            # Ubuntu/Linux
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            '/usr/share/fonts/TTF/DejaVuSans.ttf',
         ]
         
-        font_registered = False
-        for font_path in arial_unicode_paths:
-            try:
-                if os.path.exists(font_path):
-                    pdfmetrics.registerFont(TTFont('ArialUnicode', font_path))
-                    pdfmetrics.registerFont(TTFont('ArialUnicode-Bold', font_path))
-                    font_registered = True
-                    font_name = 'ArialUnicode'
-                    font_name_bold = 'ArialUnicode-Bold'
-                    break
-            except Exception as e:
-                continue
+        for font_path in font_paths:
+            if os.path.exists(font_path):
+                pdfmetrics.registerFont(TTFont('CyrillicFont', font_path))
+                font_name = 'CyrillicFont'
+                font_name_bold = 'CyrillicFont'
+                break
     except Exception as e:
         pass
     
