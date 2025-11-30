@@ -215,6 +215,7 @@ def admin_add_teacher():
     teacher = User(
         username=username,
         password=generate_password_hash(password),
+        plain_password=password,
         full_name=full_name,
         role='teacher'
     )
@@ -260,6 +261,7 @@ def admin_reset_password(teacher_id):
     new_password = request.form.get('new_password')
     
     teacher.password = generate_password_hash(new_password)
+    teacher.plain_password = new_password
     db.session.commit()
     
     flash(f'Пароль для {teacher.username} изменен', 'success')
@@ -1516,6 +1518,44 @@ def teacher_delete_student(student_id):
     db.session.commit()
     flash('Ученик удален', 'success')
     return redirect(url_for('teacher_students', circle_id=circle.id))
+
+
+@app.route('/teacher/change-password', methods=['GET', 'POST'])
+@login_required
+def teacher_change_password():
+    """Смена пароля преподавателем"""
+    if current_user.is_admin():
+        return redirect(url_for('admin_dashboard'))
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password', '')
+        new_password = request.form.get('new_password', '')
+        confirm_password = request.form.get('confirm_password', '')
+        
+        # Проверяем текущий пароль
+        if not check_password_hash(current_user.password, current_password):
+            flash('Неверный текущий пароль', 'error')
+            return redirect(url_for('teacher_change_password'))
+        
+        # Проверяем совпадение паролей
+        if new_password != confirm_password:
+            flash('Пароли не совпадают', 'error')
+            return redirect(url_for('teacher_change_password'))
+        
+        # Проверяем длину
+        if len(new_password) < 4:
+            flash('Пароль должен быть минимум 4 символа', 'error')
+            return redirect(url_for('teacher_change_password'))
+        
+        # Меняем пароль
+        current_user.password = generate_password_hash(new_password)
+        current_user.plain_password = new_password  # Сохраняем для админа
+        db.session.commit()
+        
+        flash('Пароль успешно изменен', 'success')
+        return redirect(url_for('teacher_dashboard'))
+    
+    return render_template('teacher/change_password.html')
 
 
 # ===== СОЗДАНИЕ БД =====

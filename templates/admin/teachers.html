@@ -25,6 +25,7 @@
                         <tr>
                             <th>ФИО</th>
                             <th>Логин</th>
+                            <th>Пароль</th>
                             <th>Кружки</th>
                             <th>Дата создания</th>
                             <th class="text-end">Действия</th>
@@ -35,6 +36,9 @@
                         <tr>
                             <td><strong>{{ teacher.full_name }}</strong></td>
                             <td><code>{{ teacher.username }}</code></td>
+                            <td>
+                                <span class="badge bg-secondary">{{ teacher.plain_password or '***' }}</span>
+                            </td>
                             <td>
                                 {% if teacher.circles %}
                                     {% for circle in teacher.circles %}
