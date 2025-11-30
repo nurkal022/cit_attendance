@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Кружки - Админ панель{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-collection"></i> Управление кружками</h2>
+            <p class="text-muted">Создавайте и назначайте преподавателей</p>
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCircleModal">
+                <i class="bi bi-plus-circle"></i> Добавить кружок
+            </button>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% for circle in circles %}
+        <div class="col-md-6 col-lg-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <h5 class="card-title">{{ circle.name }}</h5>
+                    <p class="text-muted mb-3">
+                        <i class="bi bi-compass"></i> {{ circle.direction or 'Без направления' }}
+                    </p>
+                    <div class="mb-3">
+                        <small class="text-muted">Преподаватель:</small><br>
+                        {% if circle.teacher %}
+                            <strong>{{ circle.teacher.username }}</strong>
+                        {% else %}
+                            <span class="text-warning">Не назначен</span>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <small class="text-muted">Учеников:</small><br>
+                        <strong>{{ circle.students|length }}</strong>
+                    </div>
+                    
+                    {% if circle.schedules %}
+                    <div class="mb-3">
+                        <button class="btn btn-sm btn-outline-secondary w-100" type="button" data-bs-toggle="collapse" data-bs-target="#schedule{{ circle.id }}">
+                            <i class="bi bi-calendar-week"></i> Расписание ({{ circle.schedules|length }})
+                        </button>
+                        <div class="collapse mt-2" id="schedule{{ circle.id }}">
+                            <div class="list-group list-group-flush small">
+                                {% for s in circle.schedules[:5] %}
+                                <div class="list-group-item px-2 py-1">
+                                    <div><strong>{{ s.day_of_week }}</strong> {{ s.group_number or '' }}</div>
+                                    <div class="text-muted">{{ s.time_slot }} | Каб. {{ s.room }}</div>
+                                </div>
+                                {% endfor %}
+                                {% if circle.schedules|length > 5 %}
+                                <div class="list-group-item px-2 py-1 text-center text-muted">
+                                    ... и еще {{ circle.schedules|length - 5 }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary flex-fill" data-bs-toggle="modal" data-bs-target="#editCircleModal{{ circle.id }}">
+                            <i class="bi bi-pencil"></i> Изменить
+                        </button>
+                        <a href="{{ url_for('admin_students', circle_id=circle.id) }}" class="btn btn-sm btn-info">
+                            <i class="bi bi-people"></i>
+                        </a>
+                        <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteCircleModal{{ circle.id }}">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно редактирования -->
+        <div class="modal fade" id="editCircleModal{{ circle.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{{ url_for('admin_edit_circle', circle_id=circle.id) }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Редактировать кружок</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Название</label>
+                                <input type="text" class="form-control" name="name" value="{{ circle.name }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Направление</label>
+                                <input type="text" class="form-control" name="direction" value="{{ circle.direction or '' }}">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Преподаватель</label>
+                                <select class="form-select" name="teacher_id">
+                                    <option value="">Не назначен</option>
+                                    {% for teacher in teachers %}
+                                    <option value="{{ teacher.id }}" {% if circle.teacher_id == teacher.id %}selected{% endif %}>
+                                        {{ teacher.username }} ({{ teacher.circles|length }} кружков)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-primary">Сохранить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно удаления -->
+        <div class="modal fade" id="deleteCircleModal{{ circle.id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{{ url_for('admin_delete_circle', circle_id=circle.id) }}">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Удаление кружка</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>Удалить кружок <strong>{{ circle.name }}</strong>?</p>
+                            <p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Будут удалены все студенты и посещения!</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Модальное окно добавления кружка -->
+<div class="modal fade" id="addCircleModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_add_circle') }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Добавить кружок</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Название</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Направление</label>
+                        <input type="text" class="form-control" name="direction">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Преподаватель</label>
+                        <select class="form-select" name="teacher_id">
+                            <option value="">Не назначен</option>
+                            {% for teacher in teachers %}
+                                <option value="{{ teacher.id }}">{{ teacher.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Добавить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

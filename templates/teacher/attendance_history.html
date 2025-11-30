@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}История посещений - {{ circle.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Мои кружки</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_circle', circle_id=circle.id) }}">{{ circle.name }}</a></li>
+                    <li class="breadcrumb-item active">История посещений</li>
+                </ol>
+            </nav>
+            <h2><i class="bi bi-calendar3"></i> История посещений - {{ circle.name }}</h2>
+            <p class="text-muted">{{ month_name_ru }} {{ year }}</p>
+        </div>
+        <div class="col-auto">
+            <div class="btn-group">
+                <a href="{{ url_for('attendance_history', circle_id=circle.id, year=year, month=month-1 if month > 1 else 12) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+                <a href="{{ url_for('attendance_history', circle_id=circle.id, year=year, month=month+1 if month < 12 else 1) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered attendance-table">
+                    <thead>
+                        <tr>
+                            <th class="sticky-col" style="min-width: 200px;">ФИО</th>
+                            {% for day in range(1, days_in_month + 1) %}
+                                <th class="text-center" style="min-width: 40px;">{{ day }}</th>
+                            {% endfor %}
+                            <th class="text-center bg-light">Всего</th>
+                            <th class="text-center bg-light">%</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        {% set present_count = 0 %}
+                        {% set total_count = 0 %}
+                        
+                        {# Сначала считаем статистику #}
+                        {% for day in range(1, days_in_month + 1) %}
+                            {% if student.id in attendance_dict and day in attendance_dict[student.id] %}
+                                {% set total_count = total_count + 1 %}
+                                {% if attendance_dict[student.id][day].status == 'present' %}
+                                    {% set present_count = present_count + 1 %}
+                                {% endif %}
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <tr>
+                            <td class="sticky-col bg-white"><strong>{{ student.full_name }}</strong></td>
+                            {% for day in range(1, days_in_month + 1) %}
+                                <td class="text-center attendance-cell">
+                                    {% if student.id in attendance_dict and day in attendance_dict[student.id] %}
+                                        {% set att = attendance_dict[student.id][day] %}
+                                        {% if att.status == 'present' %}
+                                            <span class="badge bg-success" title="Присутствовал">✓</span>
+                                        {% elif att.status == 'absent' %}
+                                            <span class="badge bg-danger" title="Отсутствовал">✗</span>
+                                        {% elif att.status == 'excused' %}
+                                            <span class="badge bg-warning" title="Уважительная причина">У</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            {% endfor %}
+                            <td class="text-center bg-light"><strong>{{ present_count }}/{{ total_count }}</strong></td>
+                            <td class="text-center bg-light">
+                                {% if total_count > 0 %}
+                                    <span class="badge bg-{{ 'success' if (present_count / total_count * 100) >= 80 else 'warning' if (present_count / total_count * 100) >= 60 else 'danger' }}">
+                                        {{ (present_count / total_count * 100) | round(1) }}%
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-4">
+                <h6>Легенда:</h6>
+                <span class="badge bg-success me-2">✓</span> Присутствовал
+                <span class="badge bg-danger me-2">✗</span> Отсутствовал
+                <span class="badge bg-warning me-2">У</span> Уважительная причина
+                <span class="text-muted">-</span> Нет отметки
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mt-3">В этом кружке нет учеников</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .attendance-table {
+        font-size: 0.9rem;
+    }
+    .attendance-table .sticky-col {
+        position: sticky;
+        left: 0;
+        z-index: 10;
+        background-color: #fff;
+        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+    }
+    .attendance-cell {
+        padding: 0.25rem !important;
+    }
+</style>
+{% endblock %}
+

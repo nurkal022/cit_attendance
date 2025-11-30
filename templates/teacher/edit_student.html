@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}{{ 'Редактирование' if student else 'Добавление' }} ученика - ЦИТ{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Заголовок -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h2>
+                        <i class="bi bi-{{ 'pencil' if student else 'plus-circle' }}"></i>
+                        {{ 'Редактирование' if student else 'Добавление' }} ученика
+                    </h2>
+                    <p class="text-muted mb-0">{{ circle.name }}</p>
+                </div>
+                <a href="{{ url_for('teacher_students', circle_id=circle.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Назад
+                </a>
+            </div>
+
+            <!-- Форма -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <form method="POST">
+                        <!-- ФИО -->
+                        <div class="mb-3">
+                            <label class="form-label">ФИО <span class="text-danger">*</span></label>
+                            <input type="text" name="full_name" class="form-control" required
+                                   value="{{ student.full_name if student else '' }}"
+                                   placeholder="Иванов Иван Иванович">
+                        </div>
+
+                        <div class="row">
+                            <!-- Группа -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Группа</label>
+                                <select name="group_number" class="form-select">
+                                    <option value="">Не указана</option>
+                                    {% for g in groups %}
+                                    <option value="{{ g }}" {{ 'selected' if student and student.group_number == g }}>{{ g }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Группы из расписания кружка</small>
+                            </div>
+
+                            <!-- Класс -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Класс</label>
+                                <input type="text" name="grade" class="form-control"
+                                       value="{{ student.grade if student else '' }}"
+                                       placeholder="7А">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- ИИН -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">ИИН</label>
+                                <input type="text" name="iin" class="form-control" maxlength="12"
+                                       value="{{ student.iin if student else '' }}"
+                                       placeholder="123456789012">
+                            </div>
+
+                            <!-- Пол -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Пол</label>
+                                <select name="gender" class="form-select">
+                                    <option value="">Не указан</option>
+                                    <option value="М" {{ 'selected' if student and student.gender == 'М' }}>Мужской</option>
+                                    <option value="Ж" {{ 'selected' if student and student.gender == 'Ж' }}>Женский</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Школа -->
+                        <div class="mb-3">
+                            <label class="form-label">Школа</label>
+                            <input type="text" name="school" class="form-control"
+                                   value="{{ student.school if student else '' }}"
+                                   placeholder="СШ №1">
+                        </div>
+
+                        <!-- Телефон родителя -->
+                        <div class="mb-3">
+                            <label class="form-label">Телефон родителя</label>
+                            <input type="text" name="applicant_phone" class="form-control"
+                                   value="{{ student.applicant_phone if student else '' }}"
+                                   placeholder="+7 (777) 123-45-67">
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-lg"></i> {{ 'Сохранить' if student else 'Добавить' }}
+                            </button>
+                            <a href="{{ url_for('teacher_students', circle_id=circle.id) }}" class="btn btn-outline-secondary">
+                                Отмена
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if student %}
+            <!-- Дополнительная информация -->
+            <div class="card border-0 shadow-sm mt-4">
+                <div class="card-header bg-light">
+                    <i class="bi bi-info-circle"></i> Дополнительная информация
+                </div>
+                <div class="card-body">
+                    <div class="row small text-muted">
+                        {% if student.applicant_name %}
+                        <div class="col-md-6 mb-2">
+                            <strong>Заявитель:</strong> {{ student.applicant_name }}
+                        </div>
+                        {% endif %}
+                        {% if student.address %}
+                        <div class="col-md-6 mb-2">
+                            <strong>Адрес:</strong> {{ student.address }}
+                        </div>
+                        {% endif %}
+                        {% if student.application_date %}
+                        <div class="col-md-6 mb-2">
+                            <strong>Дата заявки:</strong> {{ student.application_date.strftime('%d.%m.%Y') }}
+                        </div>
+                        {% endif %}
+                        {% if student.direction %}
+                        <div class="col-md-6 mb-2">
+                            <strong>Направление:</strong> {{ student.direction }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

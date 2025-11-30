@@ -1,0 +1,48 @@
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Database
+instance/
+*.db
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Credentials (keep these private!)
+ALL_CREDENTIALS.txt
+TEACHERS_CREDENTIALS.txt
+*_CREDENTIALS.txt
+
+# Import data files (sensitive)
+export*.xlsx
+Расписание_кружков.xlsx
+*_SUMMARY.txt
+*_INSTRUCTIONS.md
+BEFORE_AFTER_EXAMPLES.txt
+CHANGES_SUMMARY.txt
+
+# Byte-compiled files
+*.pyc

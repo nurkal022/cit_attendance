@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Расписание - Админ панель{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-calendar-week"></i> Расписание кружков</h2>
+            <p class="text-muted">Расписание каждого кружка по дням недели и времени</p>
+        </div>
+        <div class="col-auto">
+            <a href="{{ url_for('admin_schedule_export_pdf') }}" class="btn btn-danger">
+                <i class="bi bi-file-pdf"></i> Экспорт в PDF
+            </a>
+        </div>
+    </div>
+
+    {% if circles_schedules %}
+        {% for circle_data in circles_schedules %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="bi bi-book"></i> {{ circle_data.circle.name }}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <span class="badge bg-light text-dark">
+                            <i class="bi bi-person"></i> {{ circle_data.teacher }}
+                        </span>
+                        {% if circle_data.circle.direction %}
+                        <span class="badge bg-light text-dark ms-2">
+                            <i class="bi bi-compass"></i> {{ circle_data.circle.direction }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 120px;">Время</th>
+                                {% for day in days_order %}
+                                <th class="text-center">{{ day }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if circle_data.sorted_times %}
+                                {% for time_slot in circle_data.sorted_times %}
+                                <tr>
+                                    <td class="fw-bold bg-light">{{ time_slot }}</td>
+                                    {% for day in days_order %}
+                                    <td style="vertical-align: top; min-height: 50px;">
+                                        {% if day in circle_data.schedule_dict and time_slot in circle_data.schedule_dict[day] %}
+                                            {% for item in circle_data.schedule_dict[day][time_slot] %}
+                                            <div class="mb-1 p-2 border rounded small" style="background-color: #e7f3ff;">
+                                                {% if item.group %}
+                                                <div class="fw-bold mb-1">
+                                                    <i class="bi bi-people"></i> {{ item.group }}
+                                                </div>
+                                                {% endif %}
+                                                {% if item.room %}
+                                                <div class="text-muted" style="font-size: 0.75rem;">
+                                                    <i class="bi bi-door-open"></i> Каб. {{ item.room }}
+                                                    {% if item.floor %}
+                                                    <span class="badge bg-secondary" style="font-size: 0.65rem;">{{ item.floor }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-4">
+                                        Расписание не заполнено
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="alert alert-info">
+            <i class="bi bi-info-circle"></i> 
+            Расписание кружков не найдено. Импортируйте расписание из Excel файла.
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.table-responsive {
+    border: none;
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table thead th {
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+    padding: 12px 8px;
+    background-color: #f8f9fa !important;
+}
+
+.table tbody td {
+    border: 1px solid #e9ecef;
+    padding: 8px 4px;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.card-header {
+    border-bottom: 2px solid rgba(255,255,255,0.2);
+}
+
+.bg-light {
+    background-color: #f8f9fa !important;
+}
+</style>
+{% endblock %}

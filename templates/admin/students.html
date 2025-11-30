@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Ученики - Админ панель{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="bi bi-people"></i> Список учеников</h2>
+            {% if selected_circle %}
+                <p class="text-muted">Кружок: <strong>{{ selected_circle.name }}</strong></p>
+            {% else %}
+                <p class="text-muted">Все ученики в системе</p>
+            {% endif %}
+        </div>
+        <div class="col-auto">
+            <div class="dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                    <i class="bi bi-filter"></i> Фильтр по кружку
+                </button>
+                <ul class="dropdown-menu">
+                    <li><a class="dropdown-item" href="{{ url_for('admin_students') }}">Все кружки</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    {% for circle in circles %}
+                        <li><a class="dropdown-item" href="{{ url_for('admin_students', circle_id=circle.id) }}">
+                            {{ circle.name }}
+                        </a></li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            {% if students %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>ФИО</th>
+                            <th>ИИН</th>
+                            <th>Пол</th>
+                            <th>Класс</th>
+                            <th>Школа</th>
+                            <th>Кружок</th>
+                            <th>Телефон заявителя</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td><strong>{{ student.full_name }}</strong></td>
+                            <td><small>{{ student.iin or '-' }}</small></td>
+                            <td>{{ student.gender or '-' }}</td>
+                            <td>{{ student.grade or '-' }}</td>
+                            <td><small>{{ student.school or '-' }}</small></td>
+                            <td>
+                                {% if student.circle %}
+                                    <span class="badge bg-info">{{ student.circle.name }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ student.applicant_phone or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3 text-muted">
+                <small>Всего учеников: {{ students|length }}</small>
+            </div>
+            {% else %}
+            <div class="text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mt-3">Учеников не найдено</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+

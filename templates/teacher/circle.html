@@ -1,0 +1,490 @@
+{% extends "base.html" %}
+
+{% block title %}{{ circle.name }} - Отметка посещаемости{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('teacher_dashboard') }}">Мои кружки</a></li>
+                    <li class="breadcrumb-item active">{{ circle.name }}</li>
+                </ol>
+            </nav>
+            <h2><i class="bi bi-pencil-square"></i> {{ circle.name }}</h2>
+            <p class="text-muted">Отметка посещаемости</p>
+        </div>
+    </div>
+
+    <!-- Расписание кружка -->
+    {% if schedule_grouped %}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-calendar-week"></i> Расписание занятий</h5>
+        </div>
+        <div class="card-body">
+            <div class="row g-2">
+                {% for day_name in days_order %}
+                    {% if day_name in schedule_grouped %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded p-2">
+                            <strong class="text-primary">{{ day_name }}</strong>
+                            <div class="mt-2">
+                                {% for schedule in schedule_grouped[day_name] %}
+                                    {% set is_current = current_schedule and current_schedule.id == schedule.id %}
+                                    {% set is_selected = selected_schedule and selected_schedule.id == schedule.id %}
+                                    <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='day', date=selected_date.strftime('%Y-%m-%d'), schedule_id=schedule.id) }}" 
+                                       class="d-block p-2 mb-1 rounded text-decoration-none {% if is_selected %}bg-primary text-white{% elif is_current %}bg-warning text-dark{% else %}bg-light{% endif %}">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <small class="fw-bold">
+                                                    {% if schedule.group_number %}
+                                                        {{ schedule.group_number }}
+                                                    {% else %}
+                                                        Занятие
+                                                    {% endif %}
+                                                </small>
+                                                <div class="small">{{ schedule.time_slot or '' }}</div>
+                                            </div>
+                                            <div class="text-end">
+                                                {% if schedule.room %}
+                                                    <small>Каб. {{ schedule.room }}</small>
+                                                {% endif %}
+                                                {% if is_current %}
+                                                    <span class="badge bg-warning text-dark">Сейчас</span>
+                                                {% elif is_selected %}
+                                                    <span class="badge bg-light text-dark">Выбрано</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Переключатель режимов и навигация -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="btn-group w-100" role="group">
+                        <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='day', date=selected_date.strftime('%Y-%m-%d')) }}{% if selected_schedule %}?schedule_id={{ selected_schedule.id }}{% endif %}" 
+                           class="btn {% if view_mode == 'day' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <i class="bi bi-calendar-day"></i> День
+                        </a>
+                        <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='week', date=selected_date.strftime('%Y-%m-%d')) }}" 
+                           class="btn {% if view_mode == 'week' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <i class="bi bi-calendar-week"></i> Неделя
+                        </a>
+                        <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='month', date=selected_date.strftime('%Y-%m-%d')) }}" 
+                           class="btn {% if view_mode == 'month' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                            <i class="bi bi-calendar-month"></i> Месяц
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-4 text-center">
+                    {% if view_mode == 'day' %}
+                        <form method="GET" class="d-inline">
+                            <input type="hidden" name="mode" value="day">
+                            {% if selected_schedule %}
+                            <input type="hidden" name="schedule_id" value="{{ selected_schedule.id }}">
+                            {% endif %}
+                            <input type="date" name="date" value="{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                   class="form-control" onchange="this.form.submit()">
+                        </form>
+                    {% elif view_mode == 'week' %}
+                        {% if nav_dates.week_start and nav_dates.week_end %}
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='week', date=nav_dates.prev) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                            <span class="fw-bold">{{ nav_dates.week_start.strftime('%d.%m') }} - {{ nav_dates.week_end.strftime('%d.%m.%Y') }}</span>
+                            <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='week', date=nav_dates.next) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </div>
+                        {% endif %}
+                    {% elif view_mode == 'month' %}
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='month', date=nav_dates.prev) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-left"></i>
+                            </a>
+                            <span class="fw-bold">{{ months_ru[selected_date.month] }} {{ selected_date.year }}</span>
+                            <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode='month', date=nav_dates.next) }}" 
+                               class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('teacher_circle', circle_id=circle.id, mode=view_mode, date=today.strftime('%Y-%m-%d')) }}" 
+                       class="btn btn-outline-primary me-2">
+                        <i class="bi bi-calendar-today"></i> Сегодня
+                    </a>
+                    <a href="{{ url_for('attendance_history', circle_id=circle.id) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-calendar3"></i> История
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Информация о выбранном занятии -->
+    {% if selected_schedule %}
+    <div class="alert alert-primary mb-3">
+        <i class="bi bi-info-circle"></i> 
+        <strong>Выбрано занятие:</strong> 
+        {{ selected_schedule.day_of_week }}, 
+        {% if selected_schedule.group_number %}{{ selected_schedule.group_number }}, {% endif %}
+        {{ selected_schedule.time_slot }}
+        {% if selected_schedule.room %} | Каб. {{ selected_schedule.room }}{% endif %}
+    </div>
+    {% endif %}
+
+    {% if students %}
+        {% if view_mode == 'day' %}
+            <!-- РЕЖИМ ДНЯ -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-calendar-day"></i> {{ selected_date.strftime('%d.%m.%Y') }} 
+                        <span class="badge bg-secondary">{{ weekdays_ru[selected_date.weekday()] }}</span>
+                    </h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>ФИО</th>
+                                    <th>Класс</th>
+                                    <th style="width: 350px;">Статус</th>
+                                    <th style="width: 250px;">Примечание</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr data-student-id="{{ student.id }}" data-date="{{ selected_date.strftime('%Y-%m-%d') }}">
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ student.full_name }}</strong></td>
+                                    <td>{{ student.grade or '-' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm w-100" role="group">
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   id="present_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   value="present"
+                                                   {% if selected_date in attendances_dict and student.id in attendances_dict[selected_date] and attendances_dict[selected_date][student.id].status == 'present' %}checked{% endif %}>
+                                            <label class="btn btn-outline-success" for="present_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}">
+                                                <i class="bi bi-check-circle"></i> Присутствует
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   id="absent_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   value="absent"
+                                                   {% if selected_date in attendances_dict and student.id in attendances_dict[selected_date] and attendances_dict[selected_date][student.id].status == 'absent' %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger" for="absent_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}">
+                                                <i class="bi bi-x-circle"></i> Отсутствует
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   id="excused_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}" 
+                                                   value="excused"
+                                                   {% if selected_date in attendances_dict and student.id in attendances_dict[selected_date] and attendances_dict[selected_date][student.id].status == 'excused' %}checked{% endif %}>
+                                            <label class="btn btn-outline-warning" for="excused_{{ student.id }}_{{ selected_date.strftime('%Y-%m-%d') }}">
+                                                <i class="bi bi-exclamation-circle"></i> Уважительная
+                                            </label>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <input type="text" class="form-control form-control-sm attendance-note" 
+                                               placeholder="Примечание"
+                                               value="{{ attendances_dict[selected_date][student.id].note if selected_date in attendances_dict and student.id in attendances_dict[selected_date] else '' }}">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        {% elif view_mode == 'week' %}
+            <!-- РЕЖИМ НЕДЕЛИ - ТАБЛИЦА -->
+            {% if dates_to_show %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-calendar-week"></i> Неделя: {{ nav_dates.week_start.strftime('%d.%m') }} - {{ nav_dates.week_end.strftime('%d.%m.%Y') }}
+                    </h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>ФИО</th>
+                                    {% for day_date in dates_to_show %}
+                                    <th class="text-center" style="min-width: 120px;">
+                                        {{ day_date.strftime('%d.%m') }}<br>
+                                        <small class="text-muted">{{ weekdays_ru[day_date.weekday()][:3] }}</small>
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ student.full_name }}</strong></td>
+                                    {% for day_date in dates_to_show %}
+                                    <td class="text-center" data-student-id="{{ student.id }}" data-date="{{ day_date.strftime('%Y-%m-%d') }}">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="present_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="present"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'present' %}checked{% endif %}>
+                                            <label class="btn btn-outline-success" for="present_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Присутствует">
+                                                <i class="bi bi-check"></i>
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="absent_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="absent"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'absent' %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger" for="absent_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Отсутствует">
+                                                <i class="bi bi-x"></i>
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="excused_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="excused"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'excused' %}checked{% endif %}>
+                                            <label class="btn btn-outline-warning" for="excused_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Уважительная">
+                                                <i class="bi bi-exclamation"></i>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> В выбранной неделе нет дней с занятиями
+                </div>
+            {% endif %}
+
+        {% elif view_mode == 'month' %}
+            <!-- РЕЖИМ МЕСЯЦА - ТАБЛИЦА -->
+            {% if dates_to_show %}
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">
+                        <i class="bi bi-calendar-month"></i> {{ months_ru[selected_date.month] }} {{ selected_date.year }}
+                    </h5>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>ФИО</th>
+                                    {% for day_date in dates_to_show %}
+                                    <th class="text-center {% if day_date == today %}bg-success text-white{% endif %}" style="min-width: 100px;">
+                                        {{ day_date.strftime('%d') }}<br>
+                                        <small>{{ weekdays_ru[day_date.weekday()][:3] }}</small>
+                                    </th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for student in students %}
+                                <tr>
+                                    <td>{{ loop.index }}</td>
+                                    <td><strong>{{ student.full_name }}</strong></td>
+                                    {% for day_date in dates_to_show %}
+                                    <td class="text-center {% if day_date == today %}bg-success bg-opacity-10{% endif %}" 
+                                        data-student-id="{{ student.id }}" data-date="{{ day_date.strftime('%Y-%m-%d') }}">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="present_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="present"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'present' %}checked{% endif %}>
+                                            <label class="btn btn-outline-success" for="present_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Присутствует">
+                                                <i class="bi bi-check"></i>
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="absent_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="absent"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'absent' %}checked{% endif %}>
+                                            <label class="btn btn-outline-danger" for="absent_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Отсутствует">
+                                                <i class="bi bi-x"></i>
+                                            </label>
+
+                                            <input type="radio" class="btn-check attendance-radio" 
+                                                   name="attendance_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   id="excused_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" 
+                                                   value="excused"
+                                                   {% if day_date in attendances_dict and student.id in attendances_dict[day_date] and attendances_dict[day_date][student.id].status == 'excused' %}checked{% endif %}>
+                                            <label class="btn btn-outline-warning" for="excused_{{ student.id }}_{{ day_date.strftime('%Y-%m-%d') }}" title="Уважительная">
+                                                <i class="bi bi-exclamation"></i>
+                                            </label>
+                                        </div>
+                                    </td>
+                                    {% endfor %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> В выбранном месяце нет дней с занятиями
+                </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="alert alert-info mt-3">
+            <i class="bi bi-info-circle"></i> 
+            {% if view_mode == 'day' %}
+                Посещаемость сохраняется автоматически при выборе статуса
+            {% else %}
+                Посещаемость сохраняется автоматически. Показаны только дни с занятиями по расписанию.
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5 text-muted">
+                <i class="bi bi-inbox fs-1"></i>
+                <p class="mt-3">В этом кружке пока нет учеников</p>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const circleId = {{ circle.id }};
+    const viewMode = '{{ view_mode }}';
+
+    // Обработка изменения статуса
+    document.querySelectorAll('.attendance-radio').forEach(radio => {
+        radio.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const cell = this.closest('td');
+            const studentId = row?.dataset?.studentId || cell?.dataset?.studentId;
+            const attendanceDate = row?.dataset?.date || cell?.dataset?.date;
+            const status = this.value;
+            const noteInput = row ? row.querySelector('.attendance-note') : null;
+            const note = noteInput ? noteInput.value : '';
+            
+            if (!studentId || !attendanceDate || !status) {
+                console.error('Missing data:', { studentId, attendanceDate, status });
+                alert('Ошибка: не удалось определить данные для сохранения');
+                return;
+            }
+            
+            saveAttendance(studentId, attendanceDate, status, note);
+        });
+    });
+
+    // Обработка изменения примечания (только для режима дня)
+    if (viewMode === 'day') {
+        let noteTimeout;
+        document.querySelectorAll('.attendance-note').forEach(input => {
+            input.addEventListener('input', function() {
+                clearTimeout(noteTimeout);
+                const row = this.closest('tr');
+                const studentId = row.dataset.studentId;
+                const attendanceDate = row.dataset.date;
+                const status = row.querySelector('.attendance-radio:checked')?.value;
+                const note = this.value;
+                
+                if (status) {
+                    noteTimeout = setTimeout(() => {
+                        saveAttendance(studentId, attendanceDate, status, note);
+                    }, 1000);
+                }
+            });
+        });
+    }
+
+    // Сохранение посещаемости
+    function saveAttendance(studentId, attendanceDate, status, note) {
+        if (!studentId || !attendanceDate || !status) {
+            console.error('Invalid data:', { studentId, attendanceDate, status });
+            return;
+        }
+        
+        fetch('{{ url_for("mark_attendance") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                student_id: parseInt(studentId),
+                circle_id: circleId,
+                date: attendanceDate,
+                status: status,
+                note: note || ''
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => Promise.reject(err));
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Показываем небольшой индикатор успеха
+                const selector = `tr[data-student-id="${studentId}"][data-date="${attendanceDate}"], td[data-student-id="${studentId}"][data-date="${attendanceDate}"]`;
+                const element = document.querySelector(selector);
+                if (element) {
+                    const originalBg = element.style.backgroundColor;
+                    element.style.backgroundColor = '#d4edda';
+                    setTimeout(() => {
+                        element.style.backgroundColor = originalBg;
+                    }, 500);
+                }
+            } else {
+                console.error('Save failed:', data);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка:', error);
+            const errorMsg = error.error || 'Ошибка при сохранении';
+            alert(errorMsg);
+        });
+    }
+</script>
+{% endblock %}
+
