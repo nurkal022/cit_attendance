@@ -51,60 +51,13 @@
                             <td>{{ teacher.created_at.strftime('%d.%m.%Y') }}</td>
                             <td class="text-end">
                                 <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#resetPasswordModal{{ teacher.id }}">
-                                    <i class="bi bi-key"></i> Сбросить пароль
+                                    <i class="bi bi-key"></i>
                                 </button>
                                 <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ teacher.id }}">
                                     <i class="bi bi-trash"></i>
                                 </button>
                             </td>
                         </tr>
-
-                        <!-- Модальное окно сброса пароля -->
-                        <div class="modal fade" id="resetPasswordModal{{ teacher.id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="POST" action="{{ url_for('admin_reset_password', teacher_id=teacher.id) }}">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Сброс пароля</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Сбросить пароль для <strong>{{ teacher.username }}</strong>?</p>
-                                            <div class="mb-3">
-                                                <label class="form-label">Новый пароль</label>
-                                                <input type="text" class="form-control" name="new_password" required>
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                            <button type="submit" class="btn btn-warning">Сбросить</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Модальное окно удаления -->
-                        <div class="modal fade" id="deleteModal{{ teacher.id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <form method="POST" action="{{ url_for('admin_delete_teacher', teacher_id=teacher.id) }}">
-                                        <div class="modal-header">
-                                            <h5 class="modal-title">Удаление преподавателя</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                        </div>
-                                        <div class="modal-body">
-                                            <p>Вы уверены, что хотите удалить преподавателя <strong>{{ teacher.username }}</strong>?</p>
-                                            <p class="text-danger"><i class="bi bi-exclamation-triangle"></i> Это действие нельзя отменить!</p>
-                                        </div>
-                                        <div class="modal-footer">
-                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
-                                            <button type="submit" class="btn btn-danger">Удалить</button>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -119,9 +72,59 @@
     </div>
 </div>
 
+<!-- Модальные окна вынесены за пределы таблицы -->
+{% for teacher in teachers %}
+<!-- Модальное окно сброса пароля -->
+<div class="modal fade" id="resetPasswordModal{{ teacher.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_reset_password', teacher_id=teacher.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Сброс пароля</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Сбросить пароль для <strong>{{ teacher.full_name }}</strong>?</p>
+                    <div class="mb-3">
+                        <label class="form-label">Новый пароль</label>
+                        <input type="text" class="form-control" name="new_password" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-warning">Сбросить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно удаления -->
+<div class="modal fade" id="deleteModal{{ teacher.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('admin_delete_teacher', teacher_id=teacher.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Удаление преподавателя</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Удалить преподавателя <strong>{{ teacher.full_name }}</strong>?</p>
+                    <p class="text-danger small"><i class="bi bi-exclamation-triangle"></i> Это действие нельзя отменить</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="submit" class="btn btn-danger">Удалить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
 <!-- Модальное окно добавления преподавателя -->
 <div class="modal fade" id="addTeacherModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form method="POST" action="{{ url_for('admin_add_teacher') }}">
                 <div class="modal-header">
@@ -151,4 +154,3 @@
     </div>
 </div>
 {% endblock %}
-
